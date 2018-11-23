@@ -1,0 +1,16 @@
+name: epub_package
+description: A new Flutter package project.
+version: 0.0.1
+author: eGust<egustc@gmail.com>
+homepage: https://github.com/eGust/epub-package.dart
+
+environment:
+  sdk: ">=2.0.0-dev.68.0 <3.0.0"
+
+dependencies:
+  xml: ^3.2.0
+  html: ^0.13.3+3
+  path: ^1.6.0
+
+dev_dependencies:
+  test: ^1.5.1
