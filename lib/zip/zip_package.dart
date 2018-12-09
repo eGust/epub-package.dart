@@ -74,7 +74,7 @@ class ZipPackage {
         if (header.isLocalFile) {
           final ZipLocalFile f = header;
           entries.add(f);
-          package.movePosition(f.compressedSize);
+          package.addToPosition(f.compressedSize);
         } else if (header.isCentralDirectory) {
           final ZipCentralDirectory cd = header;
           cds.add(cd);

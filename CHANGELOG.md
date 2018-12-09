@@ -1,3 +1,4 @@
-## [0.0.1] - TODO: Add release date.
+## [0.0.1-beta1] - Basic functionalities
 
-* TODO: Describe initial release.
+- Main functionalities are finished and need to be tested.
+- Added some documents to source files.

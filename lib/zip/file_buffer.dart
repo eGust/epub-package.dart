@@ -1,7 +1,10 @@
 part of epub_package;
 
+/// A simple buffer to read files efficiently.
 class FileBuffer {
   FileBuffer._(this._file, this.length);
+
+  /// Creates [FileBuffer] from [file]
   static Future<FileBuffer> from(File file) async {
     final args = await Future.wait([
       file.open(),
@@ -18,10 +21,13 @@ class FileBuffer {
   int _blockIndex = -1;
 
   final RandomAccessFile _file;
+
+  /// Returns file size
   final int length;
   int _position = 0;
   int _fileBlockIndex = 0;
 
+  /// Indicator whether current position reached the end
   bool get isEnd => position >= length;
 
   void _setPosition(int pos) {
@@ -34,15 +40,18 @@ class FileBuffer {
     }
   }
 
+  /// Closes [file] object
   Future<void> close() => _file.close();
 
+  /// Current [position]
   int get position => _position;
   set position(int value) {
     _setPosition(value < 0 ? length + value : value);
   }
 
-  void movePosition(int bytes) {
-    _setPosition(position + bytes);
+  /// Move [position] by giving [delta] rather than set to an absolute value.
+  void addToPosition(int delta) {
+    _setPosition(position + delta);
   }
 
   int _normalizeCount(int count) {
@@ -100,14 +109,17 @@ class FileBuffer {
     return result;
   }
 
+  /// Reads [count] bytes from current [position].
   Future<List<int>> read([final int count = 1]) =>
       _read(_normalizeCount(count));
 
+  /// Reads 1 byte as unsigned int8 from current [position].
   Future<int> readByte() async {
     final buff = await read();
     return buff[0];
   }
 
+  /// Reads 2 bytes as unsigned int16 from current [position].
   Future<int> readUint16() async {
     final buff = await read(2);
     final b0 = buff[0] & 0xff;
@@ -115,6 +127,7 @@ class FileBuffer {
     return (b1 << 8) | b0;
   }
 
+  /// Reads 4 bytes as unsigned int32 from current [position].
   Future<int> readUint32() async {
     final buff = await read(4);
     final b0 = buff[0] & 0xff;
@@ -124,5 +137,6 @@ class FileBuffer {
     return (b3 << 24) | (b2 << 16) | (b1 << 8) | b0;
   }
 
+  /// Reads [count] bytes as UTF-8 string from current [position].
   Future<String> readUtf8(int count) async => utf8.decode(await read(count));
 }

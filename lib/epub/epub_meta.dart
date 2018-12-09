@@ -1,5 +1,6 @@
 part of epub_package;
 
+/// Represents item in EPub `spine`
 class EpubItemRef {
   EpubItemRef(
     this.idref, {
@@ -26,9 +27,9 @@ class EpubItemRef {
         properties = json['properties'];
 }
 
-// http://www.idpf.org/epub/31/spec/epub-packages.html
-
-class EpubMeta extends EpubXmlBase {
+/// EPub meta data
+/// read more: http://www.idpf.org/epub/31/spec/epub-packages.html
+class EpubMeta extends _EpubXmlBase {
   final String filename;
   final String basePath;
   final meta = <XmlTag>[];
@@ -50,7 +51,7 @@ class EpubMeta extends EpubXmlBase {
 
   void _loadManifest(xml.XmlElement root) {
     _childElements(root).forEach((el) {
-      final item = EpubAsset(
+      final item = EpubAsset._(
         el.getAttribute('id'),
         el.getAttribute('href'),
         el.getAttribute('media-type'),
@@ -80,6 +81,7 @@ class EpubMeta extends EpubXmlBase {
     );
   }
 
+  /// Constructs from [xmlStr] and sets [filename]
   EpubMeta.fromXml(this.filename, String xmlStr)
       : basePath = p.dirname(filename) {
     final root = _getXmlRoot(xmlStr);
@@ -88,6 +90,7 @@ class EpubMeta extends EpubXmlBase {
     _loadSpine(root.findElements('spine').first);
   }
 
+  /// Creates [EpubMeta] and load meta data from [filename] in [package]
   static Future<EpubMeta> load(EpubPackage package, String filename) async {
     final xmlStr = await package.readText(filename);
     return xmlStr == null ? null : EpubMeta.fromXml(filename, xmlStr);

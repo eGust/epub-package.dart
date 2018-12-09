@@ -1,12 +1,15 @@
 part of epub_package;
 
+/// Represents a Nav Label
 class NavLabel {
   NavLabel(this.text);
+
   final String text;
   final audio = <String, String>{};
   final img = <String, String>{};
 
-  static fromXmlElement(xml.XmlElement el) {
+  /// Constructs from XML version
+  static NavLabel fromXmlElement(xml.XmlElement el) {
     final text = el.findElements('text');
     final label = NavLabel(text.isEmpty ? null : text.first.text?.trim());
     final audio = el.findElements('audio');
@@ -36,6 +39,7 @@ class NavLabel {
   }
 }
 
+/// Represents a Nav Point
 class NavPoint {
   NavPoint({
     this.id,
@@ -45,6 +49,7 @@ class NavPoint {
     this.content,
     this.children,
   });
+
   final String id;
   final String klass;
   final String content;
@@ -55,6 +60,7 @@ class NavPoint {
   String get label => labels.first?.text;
   bool get isLink => content != null;
 
+  /// Constructs a tree-structure from <li> in HTML
   static NavPoint fromHtmlLi(String baseDir, dom.Element el) {
     final a = el.querySelector('a');
     final span = el.querySelector('span');
@@ -68,11 +74,13 @@ class NavPoint {
     );
   }
 
+  /// Parses <ol> in HTML and convert it to `List<NavPoint>`
   static List<NavPoint> htmlOlToList(String baseDir, dom.Element el) =>
       el == null
           ? []
           : el.children.map((li) => NavPoint.fromHtmlLi(baseDir, li)).toList();
 
+  /// Constructs frm XML version
   static NavPoint fromXmlElement(String baseDir, xml.XmlElement el) => NavPoint(
       id: el.getAttribute('id'),
       klass: el.getAttribute('class'),
@@ -107,7 +115,8 @@ class NavPoint {
             .toList();
 }
 
-class EpubNav extends EpubXmlBase {
+/// Represents Nav
+class EpubNav extends _EpubXmlBase {
   EpubNav._(this._type, String basepath)
       : _basepath = basepath.replaceAll('\\', '/');
 
@@ -147,8 +156,8 @@ class EpubNav extends EpubXmlBase {
     return nav;
   }
 
-  // http://www.idpf.org/epub/31/spec/epub-packages.html#sec-package-nav-def
-
+  /// Converts from Epub Nav
+  /// read more: http://www.idpf.org/epub/31/spec/epub-packages.html#sec-package-nav-def
   static EpubNav fromNav(String dirname, String xmlStr) {
     if (xmlStr == null) return null;
 
@@ -160,8 +169,6 @@ class EpubNav extends EpubXmlBase {
     return nav;
   }
 
-  // http://www.daisy.org/z3986/2005/Z3986-2005.html
-
   static String _getDocText(xml.XmlElement node) {
     if (node == null) return null;
 
@@ -169,6 +176,8 @@ class EpubNav extends EpubXmlBase {
     return text == null ? null : text.text?.trim();
   }
 
+  /// Converts from Epub NCX
+  /// read more: http://www.daisy.org/z3986/2005/Z3986-2005.html
   static EpubNav fromNcx(String dirname, String xmlStr) {
     if (xmlStr == null) return null;
 
@@ -193,71 +202,11 @@ class EpubNav extends EpubXmlBase {
     return nav;
   }
 
+  /// Parses and converts from Nav
   static Future<EpubNav> fromNavDoc(EpubDocument doc) async =>
       doc == null ? null : fromNav(doc.dirname, await doc.readText());
 
+  /// Parses and converts from NCX
   static Future<EpubNav> fromNcxDoc(EpubDocument doc) async =>
       doc == null ? null : fromNcx(doc.dirname, await doc.readText());
 }
-
-// http://www.idpf.org/epub/31/spec/epub-packages.html#sec-package-nav-def
-/*
-
-class EpubNavXthml extends EpubNav {
-  EpubNavXthml._(String basepath, String xmlStr) : super._('nav', basepath) {
-    final root = _getHtmlRoot(xmlStr);
-    _loadMeta(root.head);
-    _loadNav(root);
-  }
-
-  void _loadMeta(dom.Element head) {
-    _title = head.querySelector('title')?.text;
-  }
-
-  void _loadNav(dom.Document root) {
-    _navMap.addAll(
-        NavPoint.htmlOlToList(_basepath, root.querySelector('nav > ol')));
-  }
-
-  static EpubNavXthml fromXml(String filename, String xmlStr) =>
-      xmlStr == null ? null : EpubNavXthml._(p.dirname(filename), xmlStr);
-}
-
-// http://www.daisy.org/z3986/2005/Z3986-2005.html
-
-class EpubNcx extends EpubNav {
-  EpubNcx._(String basepath, String xmlStr) : super._('ncx', basepath) {
-    final root = _getXmlRoot(xmlStr);
-    _loadMeta(root.findElements('head').first);
-    _loadDocAttributes(root);
-    _loadNavMap(root.findElements('navMap').first);
-  }
-
-  void _loadMeta(xml.XmlElement root) {
-    if (root == null) return;
-  }
-
-  String _getDocText(xml.XmlElement node) {
-    if (node == null) return null;
-
-    final text = node.findElements('text').first;
-    return text == null ? null : text.text?.trim();
-  }
-
-  void _loadDocAttributes(xml.XmlElement root) {
-    _title = _getDocText(root.findElements('docTitle').first);
-    _authors.addAll(root.findElements('docAuthor').map(_getDocText));
-  }
-
-  void _loadNavMap(xml.XmlElement root) {
-    if (root == null) return;
-    _navMap.addAll(root
-        .findElements('navPoint')
-        .map((el) => NavPoint.fromXmlElement(_basepath, el)));
-  }
-
-  static EpubNcx fromXml(String filename, String xmlStr) =>
-      xmlStr == null ? null : EpubNcx._(p.dirname(filename), xmlStr);
-}
-
-*/

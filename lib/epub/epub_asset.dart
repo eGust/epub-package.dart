@@ -13,6 +13,7 @@ class _Convert<T> {
 
 const _as = _Convert<String>();
 
+/// Joins file paths
 String pathJoin(List<String> paths) {
   final parts = paths.where((s) => s != null && s.isNotEmpty).toList();
   final lastIndex = parts.length - 1;
@@ -29,6 +30,7 @@ String pathJoin(List<String> paths) {
       .replaceAll('\\', '/');
 }
 
+/// Represents a file in Zip package
 class EpubFile {
   EpubFile(this.filename, this._offsetStart, this._offsetEnd, this._method);
 
@@ -37,6 +39,7 @@ class EpubFile {
   final int _offsetEnd;
   final int _method;
 
+  /// Reads file as `Stream<List<int>>`
   Stream<List<int>> toStream(File file) => ZipPackage.extract(
         file,
         start: _offsetStart,
@@ -58,10 +61,18 @@ class EpubFile {
         _method = json['compressedMethod'];
 }
 
+/// Represents a XML tag, includes tag name, inner text and attributes
 class XmlTag {
+  /// Creates [XmlTag] with [name] and [text]
   XmlTag(this.name, this.text);
+
+  /// Tag's name
   final String name;
+
+  /// Inner text
   final String text;
+
+  /// Attributes
   final attrs = <String, String>{};
 
   Map<String, dynamic> toJson() => {
@@ -77,7 +88,7 @@ class XmlTag {
   }
 }
 
-class EpubXmlBase {
+class _EpubXmlBase {
   xml.XmlElement _getXmlRoot(String xmlStr) => xml.parse(xmlStr).rootElement;
   dom.Document _getHtmlRoot(String xmlStr) => html.parse(xmlStr);
 
@@ -87,9 +98,11 @@ class EpubXmlBase {
           .where((n) => n != null);
 }
 
+/// Internal record to represents an asset in EPub
 class EpubAsset {
-  EpubAsset(this.id, this.href, this.mediaType, String basePath)
+  EpubAsset._(this.id, this.href, this.mediaType, String basePath)
       : filename = pathJoin([basePath, href]);
+
   final String id;
   final String href;
   final String mediaType;
@@ -97,6 +110,7 @@ class EpubAsset {
 
   final optional = <String, String>{};
 
+  /// Helper method to populate relative item's path
   String relativePath(String path) => pathJoin([p.dirname(filename), path]);
 
   Map<String, dynamic> toJson() => {
@@ -116,35 +130,48 @@ class EpubAsset {
   }
 }
 
+/// External record to represents an asset in EPub
 class EpubDocument {
-  EpubDocument({
+  EpubDocument._({
     this.package,
     this.id,
     this.filename,
   }) : dirname = p.dirname(filename);
 
+  /// Asset ID
   final String id;
+
+  /// Path of the asset in EPub
   final String dirname;
+
+  /// Full path of the file in EPub
   final String filename;
+
+  /// EPub package reference
   final EpubPackage package;
 
+  /// Helper method to create instance from [package] and its [asset]
   static EpubDocument fromAsset(EpubAsset asset, EpubPackage package) =>
       asset == null
           ? null
-          : EpubDocument(
+          : EpubDocument._(
               package: package,
               id: asset.id,
               filename: asset.filename,
             );
 
+  /// Reads content as `Stream`
   Future<Stream<List<int>>> readStream() => package.readStream(filename);
 
+  /// Reads content as `List<int>`
   Future<List<int>> readAsBytes() => package.readAsBytes(filename);
 
+  /// Reads content as UTF-8 String
   Future<String> readText({Converter<List<int>, String> decoder}) =>
       package.readText(filename, decoder: decoder);
 
-  EpubDocument getReletiveDoc(String relativePath) =>
+  /// Returns relative [EpubDocument] to current document
+  EpubDocument getRelativeDoc(String relativePath) =>
       package.getDocumentByPath(pathJoin([dirname, relativePath]));
 
   Map<String, dynamic> toJson() => {
