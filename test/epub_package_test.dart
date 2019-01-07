@@ -44,15 +44,21 @@ void testPackages() async {
     };
   }));
 
-  results.forEach((h) {
+  await Future.wait(results.map((h) async {
     final DateTime start = h['start'];
     final DateTime stop = h['stop'];
     final EpubPackage pkg = h['package'];
     final ts = stop.difference(start);
-    print('[time: $ts]\t${pkg.filepath}');
-    print(jsonEncode(pkg));
+    print('[time: $ts]\t${pkg.filePath}');
+    // print(jsonEncode(pkg));
+    final coverAsset = pkg.metadata.getCoverImageAsset();
+    if (coverAsset != null) {
+      final cover = pkg.getDocumentById(coverAsset.id);
+      final bytes = await cover.readAsBytes();
+      print('${coverAsset.filename}: ${bytes.length}');
+    }
     print('\n');
-  });
+  }));
 }
 
 void testPackage() async {

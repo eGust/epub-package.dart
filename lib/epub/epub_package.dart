@@ -20,7 +20,7 @@ class EpubPackage {
   bool _properlyLoaded = false;
 
   /// Returns the path of the EPub file
-  String get filepath => file.path;
+  String get filePath => file.path;
 
   /// Returns [EpubMeta] data
   EpubMeta get metadata => _meta;
@@ -84,7 +84,7 @@ class EpubPackage {
           : null);
 
   /// Returns [EpubDocument] by EPub asset's ID
-  EpubDocument getDoucmentById(String id) =>
+  EpubDocument getDocumentById(String id) =>
       EpubDocument.fromAsset(_meta.getItemById(id), this);
 
   /// Returns `null` or `Stream` by giving [filename]
@@ -95,7 +95,7 @@ class EpubPackage {
 
   /// Returns `null` or `List<int>` by giving [filename]
   Future<List<int>> readAsBytes(String filename) async =>
-      (await readStream(filename))?.first;
+      (await readStream(filename))?.expand((x) => x)?.toList();
 
   /// Returns `null` or `String` by giving [filename]
   Future<String> readText(String filename,
@@ -146,8 +146,8 @@ class EpubPackage {
   }
 
   Future<void> _loadNav() async {
-    _nav = (await EpubNav.fromNcxDoc(getDoucmentById('ncx'))) ??
-        (await EpubNav.fromNavDoc(getDoucmentById('nav')));
+    _nav = (await EpubNav.fromNcxDoc(getDocumentById('ncx'))) ??
+        (await EpubNav.fromNavDoc(getDocumentById('nav')));
   }
 
   /// Creates [EpubPackage] from `JSON` object.

@@ -41,7 +41,7 @@ class EpubMeta extends _EpubXmlBase {
     meta.addAll(_childElements(root).map((el) {
       final item = XmlTag(el.name.toString(), el.text);
       el.attributes.forEach((attr) {
-        item.attrs[attr.name.toString()] = attr.text;
+        item.attrs[attr.name.toString()] = attr.value;
       });
       return item;
     }));
@@ -96,6 +96,19 @@ class EpubMeta extends _EpubXmlBase {
     return xmlStr == null ? null : EpubMeta.fromXml(filename, xmlStr);
   }
 
+  /// Returns [EpubAsset] of cover image
+  EpubAsset getCoverImageAsset() {
+    final cover = meta.firstWhere(
+        (m) => m.name == 'meta' && m.attrs['name'] == 'cover',
+        orElse: () => null);
+    if (cover == null) return null;
+
+    final coverId = cover.attrs['content'];
+    if (coverId == null) return null;
+
+    return items[coverId];
+  }
+
   Map<String, dynamic> toJson() => {
         'filename': filename,
         'basePath': basePath,
@@ -111,7 +124,8 @@ class EpubMeta extends _EpubXmlBase {
     spine.addAll((json['meta'] as List).map((j) => EpubItemRef.fromJson(j)));
     (json['items'] as List).forEach((j) {
       final item = EpubAsset.fromJson(j);
-      items[item.filename] = item;
+      items[item.id] = item;
+      itemByPath[item.filename] = item;
     });
   }
 }
