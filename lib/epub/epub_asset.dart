@@ -132,11 +132,8 @@ class EpubAsset {
 
 /// External record to represents an asset in EPub
 class EpubDocument {
-  EpubDocument._({
-    this.package,
-    this.id,
-    this.filename,
-  }) : dirname = p.dirname(filename);
+  EpubDocument._({this.package, this.id, this.filename, this.asset})
+      : dirname = p.dirname(filename);
 
   /// Asset ID
   final String id;
@@ -150,6 +147,24 @@ class EpubDocument {
   /// EPub package reference
   final EpubPackage package;
 
+  /// [EpubAsset] reference
+  final EpubAsset asset;
+
+  /// Asset content type
+  /// It prefers `asset.mediaType`
+  /// If no [asset] assigned it will lookup by [filename]
+  /// When [detectHeader] is set it will detect header
+  Future<String> mimeType({bool detectHeader = false}) async {
+    if (asset != null) return asset.mediaType;
+
+    if (detectHeader) {
+      final bytes = await readAsBytes();
+      return mime.lookupMimeType(filename, headerBytes: bytes);
+    }
+
+    return mime.lookupMimeType(filename);
+  }
+
   /// Helper method to create instance from [package] and its [asset]
   static EpubDocument fromAsset(EpubAsset asset, EpubPackage package) =>
       asset == null
@@ -158,6 +173,7 @@ class EpubDocument {
               package: package,
               id: asset.id,
               filename: asset.filename,
+              asset: asset,
             );
 
   /// Reads content as `Stream`

@@ -8,9 +8,10 @@ environment:
   sdk: ">=2.0.0-dev.68.0 <3.0.0"
 
 dependencies:
-  xml: ^3.2.0
+  xml: ^3.2.5
   html: ^0.13.3+3
-  path: ^1.6.0
+  path: ^1.6.2
+  mime: ^0.9.6+2
 
 dev_dependencies:
   test: ^1.5.1
