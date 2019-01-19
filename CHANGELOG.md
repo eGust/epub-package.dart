@@ -1,3 +1,9 @@
+## [0.0.2-beta2] - Released on 2019-01-19
+
+- Some bug fixes
+- Added `mediaType` to `EpubDocument`
+- Support extract raw zip data so web service can directly serve `Content-Encoding: deflate`
+
 ## [0.0.1-beta1] - Basic functionalities
 
 - Main functionalities are finished and need to be tested.
