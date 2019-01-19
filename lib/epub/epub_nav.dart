@@ -57,8 +57,53 @@ class NavPoint {
   final List<NavLabel> labels;
   final List<NavPoint> children;
 
+  NavPoint prevSibling;
+  NavPoint nextSibling;
+  NavPoint parent;
+  NavPoint prev;
+  NavPoint next;
+
   String get label => labels.first?.text;
   bool get isLink => content != null;
+
+  NavPoint linkNext() {
+    final next = _findNext();
+    if (next == null) return null;
+
+    next.prev = this;
+    this.next = next;
+    return next;
+  }
+
+  NavPoint _findNext() {
+    if (children.isNotEmpty) return children.first;
+
+    var current = this;
+    while (current != null) {
+      final next = current.nextSibling;
+      if (next != null) return next;
+      current = current.parent;
+    }
+    return null;
+  }
+
+  static void linkSiblings(List<NavPoint> points, {NavPoint parent = null}) {
+    for (int i = 1, size = points.length; i < size; i += 1) {
+      final prev = points[i - 1];
+      final next = points[i];
+      prev.nextSibling = next;
+      next.prevSibling = prev;
+      next.parent = parent;
+    }
+
+    if (points.isNotEmpty) {
+      points[0].parent = parent;
+    }
+
+    points.forEach((point) {
+      linkSiblings(point.children, parent: point);
+    });
+  }
 
   /// Constructs a tree-structure from <li> in HTML
   static NavPoint fromHtmlLi(String baseDir, dom.Element el) {
@@ -124,25 +169,41 @@ class EpubNav extends _EpubXmlBase {
   final String _type;
   String _title;
   final _authors = <String>[];
-  final _navMap = <NavPoint>[];
+  final _navMapList = <NavPoint>[];
+  final _idNavMap = <String, NavPoint>{};
 
   String get basepath => _basepath;
   String get title => _title;
   List<String> get authors => _authors;
-  List<NavPoint> get navMap => _navMap;
+  List<NavPoint> get navMapList => _navMapList;
 
   Map<String, dynamic> toJson() => {
         'type': _type,
         'basepath': basepath,
         'title': title,
         'authors': authors,
-        'navMap': navMap,
+        'navMapList': navMapList,
       };
+
+  NavPoint get first => _navMapList.first;
+
+  void linkPoints() {
+    NavPoint.linkSiblings(_navMapList);
+    var point = first;
+    while (point != null) {
+      _idNavMap[point.id] = point;
+      point = point.linkNext();
+    }
+  }
+
+  NavPoint findById(String id) => _idNavMap[id];
 
   void _loadFromJson(Map<String, dynamic> json) {
     _title = json['title'];
     _authors.addAll(_as.list(json['authors']));
-    _navMap.addAll((json['navMap'] as List).map((j) => NavPoint.fromJson(j)));
+    _navMapList
+        .addAll((json['navMapList'] as List).map((j) => NavPoint.fromJson(j)));
+    linkPoints();
   }
 
   static EpubNav loadFromJson(Map<String, dynamic> json) {
@@ -164,8 +225,9 @@ class EpubNav extends _EpubXmlBase {
     final nav = EpubNav._('nav', dirname);
     final root = nav._getHtmlRoot(xmlStr);
     nav._title = root.head.querySelector('title')?.text;
-    nav._navMap.addAll(
+    nav._navMapList.addAll(
         NavPoint.htmlOlToList(nav._basepath, root.querySelector('nav > ol')));
+    nav.linkPoints();
     return nav;
   }
 
@@ -191,14 +253,15 @@ class EpubNav extends _EpubXmlBase {
     nav._title = _getDocText(root.findElements('docTitle').first);
     nav._authors.addAll(root.findElements('docAuthor').map(_getDocText));
 
-    // loadNavMap
-    final navMap = root.findElements('navMap').first;
-    if (navMap != null) {
-      nav._navMap.addAll(navMap
+    // loadNavMapList
+    final navMapList = root.findElements('navMap').first;
+    if (navMapList != null) {
+      nav._navMapList.addAll(navMapList
           .findElements('navPoint')
           .map((el) => NavPoint.fromXmlElement(nav._basepath, el)));
     }
 
+    nav.linkPoints();
     return nav;
   }
 
