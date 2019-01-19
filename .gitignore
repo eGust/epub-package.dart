@@ -6,4 +6,4 @@
 .idea/
 .vscode/
 
-test/epubs/huge/
+test/epubs/*/

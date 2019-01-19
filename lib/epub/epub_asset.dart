@@ -39,12 +39,21 @@ class EpubFile {
   final int _offsetEnd;
   final int _method;
 
+  bool get isCompressed => _method != 0;
+
   /// Reads file as `Stream<List<int>>`
   Stream<List<int>> toStream(File file) => ZipPackage.extract(
         file,
         start: _offsetStart,
         end: _offsetEnd,
         compressionMethod: _method,
+      );
+
+  /// Reads raw file as `Stream<List<int>>`
+  Stream<List<int>> toRawStream(File file) => ZipPackage.raw(
+        file,
+        start: _offsetStart,
+        end: _offsetEnd,
       );
 
   Map<String, dynamic> toJson() => {
@@ -133,7 +142,8 @@ class EpubAsset {
 /// External record to represents an asset in EPub
 class EpubDocument {
   EpubDocument._({this.package, this.id, this.filename, this.asset})
-      : dirname = p.dirname(filename);
+      : dirname = p.dirname(filename),
+        file = package.files[asset.filename];
 
   /// Asset ID
   final String id;
@@ -149,6 +159,12 @@ class EpubDocument {
 
   /// [EpubAsset] reference
   final EpubAsset asset;
+
+  /// [EpubFile] reference
+  final EpubFile file;
+
+  /// Returns if file is compressed
+  bool get isCompressed => file.isCompressed;
 
   /// Asset content type
   /// It prefers `asset.mediaType`
@@ -177,14 +193,20 @@ class EpubDocument {
             );
 
   /// Reads content as `Stream`
-  Future<Stream<List<int>>> readStream() => package.readStream(filename);
+  Future<Stream<List<int>>> readStream() => package.fileStream(file);
+
+  /// Reads content as `Stream`
+  Future<Stream<List<int>>> rawStream() => package.fileRawStream(file);
 
   /// Reads content as `List<int>`
-  Future<List<int>> readAsBytes() => package.readAsBytes(filename);
+  Future<List<int>> readAsBytes() => package.fileBytes(file);
+
+  /// Reads content as `List<int>`
+  Future<List<int>> rawAsBytes() => package.fileRawBytes(file);
 
   /// Reads content as UTF-8 String
   Future<String> readText({Converter<List<int>, String> decoder}) =>
-      package.readText(filename, decoder: decoder);
+      package.readFileText(file, decoder: decoder);
 
   /// Returns relative [EpubDocument] to current document
   EpubDocument getRelativeDoc(String relativePath) =>

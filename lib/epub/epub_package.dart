@@ -93,14 +93,51 @@ class EpubPackage {
     return f == null ? null : await f.toStream(file);
   }
 
+  /// Returns `null` or `Stream` by giving [EpubFile]
+  Future<Stream<List<int>>> fileStream(EpubFile file) async {
+    return file == null ? null : await file.toStream(this.file);
+  }
+
+  /// Returns `null` or raw `Stream` by giving [filename]
+  Future<Stream<List<int>>> rawStream(String filename) async {
+    final f = filename == null ? null : files[filename];
+    return f == null ? null : await f.toRawStream(file);
+  }
+
+  /// Returns `null` or raw `Stream` by giving [EpubFile]
+  Future<Stream<List<int>>> fileRawStream(EpubFile file) async {
+    return file == null ? null : await file.toRawStream(this.file);
+  }
+
   /// Returns `null` or `List<int>` by giving [filename]
   Future<List<int>> readAsBytes(String filename) async =>
       (await readStream(filename))?.expand((x) => x)?.toList();
+
+  /// Returns `null` or `List<int>` by giving [EpubFile]
+  Future<List<int>> fileBytes(EpubFile file) async =>
+      (await fileStream(file))?.expand((x) => x)?.toList();
+
+  /// Returns `null` or raw `List<int>` by giving [filename]
+  Future<List<int>> rawBytes(String filename) async =>
+      (await rawStream(filename))?.expand((x) => x)?.toList();
+
+  /// Returns `null` or raw `List<int>` by giving [EpubFile]
+  Future<List<int>> fileRawBytes(EpubFile file) async =>
+      (await fileRawStream(file))?.expand((x) => x)?.toList();
 
   /// Returns `null` or `String` by giving [filename]
   Future<String> readText(String filename,
       {Converter<List<int>, String> decoder}) async {
     final stream = await readStream(filename);
+    return stream == null
+        ? null
+        : await stream.transform(decoder ?? utf8.decoder).join();
+  }
+
+  /// Returns `null` or `String` by giving [EpubFile]
+  Future<String> readFileText(EpubFile file,
+      {Converter<List<int>, String> decoder}) async {
+    final stream = await fileStream(file);
     return stream == null
         ? null
         : await stream.transform(decoder ?? utf8.decoder).join();

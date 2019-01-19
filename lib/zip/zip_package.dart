@@ -104,6 +104,9 @@ class ZipPackage {
     throw UnsupportedError('Unsupported compress method: ${compressionMethod}');
   }
 
+  static Stream<List<int>> raw(File file, {final int start, final int end}) =>
+      file.openRead(start, end);
+
   Stream<List<int>> extractStream(String filename) {
     final zip = entries[filename];
     return zip == null
