@@ -62,6 +62,8 @@ class NavPoint {
   NavPoint parent;
   NavPoint prev;
   NavPoint next;
+  int index;
+  int level;
 
   String get label => labels.first?.text;
   bool get isLink => content != null;
@@ -87,21 +89,25 @@ class NavPoint {
     return null;
   }
 
-  static void linkSiblings(List<NavPoint> points, {NavPoint parent = null}) {
+  static void linkSiblings(List<NavPoint> points,
+      {int level = 0, NavPoint parent = null}) {
     for (int i = 1, size = points.length; i < size; i += 1) {
       final prev = points[i - 1];
       final next = points[i];
       prev.nextSibling = next;
       next.prevSibling = prev;
       next.parent = parent;
+      next.level = level;
     }
 
     if (points.isNotEmpty) {
-      points[0].parent = parent;
+      final point = points[0];
+      point.parent = parent;
+      point.level = level;
     }
 
     points.forEach((point) {
-      linkSiblings(point.children, parent: point);
+      linkSiblings(point.children, parent: point, level: level + 1);
     });
   }
 
@@ -185,15 +191,21 @@ class EpubNav extends _EpubXmlBase {
         'navMapList': navMapList,
       };
 
+  int _count;
+  int get count => _count;
   NavPoint get first => _navMapList.first;
 
   void linkPoints() {
     NavPoint.linkSiblings(_navMapList);
     var point = first;
+    var index = 0;
     while (point != null) {
+      point.index = index;
       _idNavMap[point.id] = point;
       point = point.linkNext();
+      index += 1;
     }
+    _count = index;
   }
 
   NavPoint findById(String id) => _idNavMap[id];
