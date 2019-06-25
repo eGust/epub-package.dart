@@ -97,7 +97,7 @@ class ZipPackage {
     final int end,
     final int compressionMethod,
   }) {
-    final stream = file.openRead(start, end);
+    final stream = file.openRead(start, end).cast<List<int>>();
     if (compressionMethod == 0) return stream;
     if (compressionMethod == 8) return stream.transform(zlibDecoder);
 
@@ -105,7 +105,7 @@ class ZipPackage {
   }
 
   static Stream<List<int>> raw(File file, {final int start, final int end}) =>
-      file.openRead(start, end);
+      file.openRead(start, end).cast<List<int>>();
 
   Stream<List<int>> extractStream(String filename) {
     final zip = entries[filename];
